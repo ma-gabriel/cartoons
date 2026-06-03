@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cartoon Guesser</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="./scripts.js" type="module"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Cartoon Guesser</h1>
+      <p class="subtitle">website in progress</p>
+
+      <div class="input-section">
+        <input
+          id="guess-input"
+          type="text"
+          class="guess-input"
+          placeholder="Type a character..."
+        />
+        <button id="guess-btn" class="guess-btn">Guess</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="guess-table" class="guess-table">
+          <thead>
+            <tr>
+              <th>Show</th>
+              <th>year of release</th>
+              <th>still running</th>
+              <th>network</th>
+              <th>genres</th>
+              <th>average rating</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <!-- JS can append guesses here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="footer">The cartoon list is all the animated shows from <a href="https://www.tvmaze.com/">tvmaze</a> from majors networks</div>
+    </div>
+  </body>
+</html>
