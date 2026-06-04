@@ -9,24 +9,29 @@
   </head>
   <body>
     <div class="container">
-      <h1>Cartoon Guesser</h1>
-      <p class="subtitle">website in progress</p>
-
+      <h1>Cartoon (show) Guesser</h1>
+      
       <div class="input-section">
         <input
           id="guess-input"
           type="text"
           class="guess-input"
-          placeholder="Type a character..."
+          placeholder="Type a title..."
         />
+        <div id="input-predictions" class="input-predictions"></div>
         <button id="guess-btn" class="guess-btn">Guess</button>
       </div>
+      <p class="subtitle">
+        clicking on a discovered category will remove all non corresponding
+        guesses
+      </p>
 
       <div class="table-wrapper">
         <table id="guess-table" class="guess-table">
           <thead>
             <tr>
               <th>Show</th>
+              <th>Poster</th>
               <th>year of release</th>
               <th>still running</th>
               <th>network</th>
@@ -36,11 +41,13 @@
           </thead>
 
           <tbody>
-            <!-- JS can append guesses here -->
           </tbody>
         </table>
       </div>
-      <div class="footer">The cartoon list is all the animated shows from <a href="https://www.tvmaze.com/">tvmaze</a> from majors networks</div>
+      <div class="footer">
+        The cartoon list is all the animated shows from
+        <a href="https://www.tvmaze.com/">tvmaze</a> from famous networks / platforms (data from the 03/06/2026)
+      </div>
     </div>
   </body>
 </html>
