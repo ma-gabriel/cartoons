@@ -1,8 +1,4 @@
 import shows_full from "./shows.json" with { type: "json" };
-let shows = shows_full.slice();
-const answer = shows[Math.floor(Math.random() * shows.length)];
-window.answer = answer;
-window.shows = shows_full;
 
 const button = document.getElementById("guess-btn");
 const input = document.getElementById("guess-input");
@@ -10,10 +6,28 @@ const tbody = document.getElementById("guess-table")?.lastElementChild;
 const tr =
   document.getElementById("guess-table")?.firstElementChild?.firstElementChild;
 const predictions = document.getElementById("input-predictions");
+const popUp = document.getElementById("win-popup");
+const overlay = document.getElementById("overlay");
 
-if (!(button && input && tbody && tr && predictions)) {
-  alert("broken js, repair please");
+if (!(button && input && tbody && tr && predictions && popUp && overlay)) {
+  alert("broken js, ask geymat for repairs please");
   throw "";
+}
+
+let shows = shows_full.slice();
+let answer;
+let answerTrimmed;
+let day = new Date().getUTCDate() - 6; // works only for june, days since launch
+let mode;
+let selectedPrediction = -1;
+let predictionsList = [];
+setUpNewGame(location.hash === "#/unlimited" ? "unlimited" : "daily");
+
+function getTodaysShow() {
+  const candidates = [
+    216, 396, 55138, 555, 3134, 6489, 83, 672, 35073, 713, 37196, 184, 45148,
+  ];
+  return shows.find((show) => show.id === candidates[day]);
 }
 
 function isEqual(elem1, elem2, category) {
@@ -44,6 +58,14 @@ function generateTd(value, style = null) {
   return elem;
 }
 
+function getGuessesCookie() {
+  return (
+    document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("guesses="))
+      ?.split("=")[1] || "[]"
+  );
+}
 function generateTdPicture(src, style = null) {
   const elem = document.createElement("td");
   const img = document.createElement("img");
@@ -157,19 +179,32 @@ function updateInfos(_guess) {
   }
 }
 
-const answerTrimmed = trimShow(answer);
+function makeWinPopUp() {
+  popUp.classList.remove("hidden");
+  overlay.classList.remove("hidden");
+  let elem = popUp.firstElementChild.nextElementSibling;
+  if (answer.officialSite) elem.firstElementChild.firstElementChild.href = answer.officialSite;
+  elem.firstElementChild.firstElementChild.innerText = answer.name;
+  elem = elem.nextElementSibling;
+  elem.src = answer.image.original;
+  elem = elem.nextElementSibling;
+  elem.innerHTML = answer.summary;
+}
+
 function generateGuess(guess) {
-  predictions.innerHTML = "";
+  if (mode === "daily") {
+    const value = JSON.parse(getGuessesCookie());
+    value.push(guess.id);
+    document.cookie = "guesses=" + JSON.stringify(value);
+  }
+  resetPrediction();
   shows.splice(shows.indexOf(guess), 1);
   input.value = "";
-  if (answer == guess) {
-    alert("lol you won");
+  if (answer === guess) {
+    makeWinPopUp();
   }
   const show_trimmed = trimShow(guess);
-  tbody.insertBefore(
-    generateTr(show_trimmed, answerTrimmed),
-    tbody.firstChild,
-  );
+  tbody.insertBefore(generateTr(show_trimmed, answerTrimmed), tbody.firstChild);
   updateInfos(show_trimmed, answerTrimmed);
 }
 
@@ -222,19 +257,67 @@ function displayShow(show) {
   return elem;
 }
 
-function launchPrediction() {
+function resetPrediction() {
+  selectedPrediction = -1;
   predictions.innerHTML = "";
+  predictionsList = [];
+}
+
+function launchPrediction() {
+  resetPrediction();
   if (!input.value) return;
-  shows
+  predictionsList = shows
     .filter((show) =>
       show.name.toLowerCase().includes(input.value.toLowerCase()),
     )
     .sort((showA, showB) => showA.name > showB.name)
-    .slice(0, 1000)
-    .forEach((show) => predictions.appendChild(displayShow(show)));
+    .slice(0, 1000);
+  predictionsList.forEach((show) => predictions.appendChild(displayShow(show)));
 }
 input.addEventListener("input", launchPrediction);
 
 input.addEventListener("keydown", (event) => {
-  if (event.code === "Enter") button.click();
+  if (event.code === "Enter") {
+    event.preventDefault();
+    button.click();
+  } else if (event.code === "ArrowDown") {
+    event.preventDefault();
+    if (predictionsList.length > selectedPrediction + 1) {
+      selectedPrediction++;
+      input.value = predictionsList[selectedPrediction].name;
+    }
+  } else if (event.code === "ArrowUp") {
+    event.preventDefault();
+    if (selectedPrediction > 0) {
+      selectedPrediction--;
+      input.value = predictionsList[selectedPrediction].name;
+    }
+  }
 });
+
+function resetOldGame() {
+  input.value = "";
+  tbody.innerHTML = "";
+  tr.innerHTML = `<th>Show</th><th>Poster</th><th>year of release</th><th>still running</th><th>network</th><th>genres</th><th>average rating</th>`;
+  resetPrediction()
+}
+
+function setUpNewGame(gamemode) {
+  resetOldGame();
+  day = new Date().getUTCDate() - 6;
+  if (gamemode === "unlimited") {
+    location.hash = "#/unlimited";
+    answer = shows[Math.floor(Math.random() * shows.length)];
+    answerTrimmed = trimShow(answer);
+    mode = "unlimited";
+    return;
+  }
+  location.hash = "#/daily";
+  answer = getTodaysShow();
+  answerTrimmed = trimShow(answer);
+  mode = "refreshing";
+  JSON.parse(getGuessesCookie()).forEach((guess) =>
+    generateGuess(shows.find((show) => show.id == guess)),
+  );
+  mode = "daily";
+}
