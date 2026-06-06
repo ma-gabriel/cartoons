@@ -183,7 +183,8 @@ function makeWinPopUp() {
   popUp.classList.remove("hidden");
   overlay.classList.remove("hidden");
   let elem = popUp.firstElementChild.nextElementSibling;
-  if (answer.officialSite) elem.firstElementChild.firstElementChild.href = answer.officialSite;
+  if (answer.officialSite)
+    elem.firstElementChild.firstElementChild.href = answer.officialSite;
   elem.firstElementChild.firstElementChild.innerText = answer.name;
   elem = elem.nextElementSibling;
   elem.src = answer.image.original;
@@ -195,7 +196,12 @@ function generateGuess(guess) {
   if (mode === "daily") {
     const value = JSON.parse(getGuessesCookie());
     value.push(guess.id);
-    document.cookie = "guesses=" + JSON.stringify(value);
+    document.cookie =
+      "guesses=" +
+      JSON.stringify(value) +
+      "; expires=" +
+      new Date(Date.UTC(2026, 5, day + 6, 23, 59, 59)).toString() +
+      "; path=/";
   }
   resetPrediction();
   shows.splice(shows.indexOf(guess), 1);
@@ -299,7 +305,7 @@ function resetOldGame() {
   input.value = "";
   tbody.innerHTML = "";
   tr.innerHTML = `<th>Show</th><th>Poster</th><th>year of release</th><th>still running</th><th>network</th><th>genres</th><th>average rating</th>`;
-  resetPrediction()
+  resetPrediction();
 }
 
 function setUpNewGame(gamemode) {
