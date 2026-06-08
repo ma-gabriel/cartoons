@@ -16,11 +16,16 @@
         <p id="description">
           Congratulations! You've successfully guessed the word for today!
         </p>
-        <button class="close-popup" onclick="this.parentElement.classList.add('hidden'); document.getElementById('overlay').classList.add('hidden')">Close</button>
+        <button class="close-popup" onclick="this.parentElement.classList.add('hidden'); document.getElementById('overlay').classList.add('hidden'); this.previousElementSibling.previousElementSibling.removeAttribute('src')">Close</button>
     </div>
 
     <div class="container">
       <h1>Cartoon (show) Guesser</h1>
+      <div class="mode-section hidden" id="mode-section">
+        <button class="mode-btn">Hello World</button>
+        <p>are you cheating son ?</p>
+      </div>
+      <p class="mode-btn" style="position: absolute; top: 1em; right: 1em;">daily: reset at 12pm UTC</p>
 
       <div class="input-section">
         <input

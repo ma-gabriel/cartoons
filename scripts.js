@@ -8,26 +8,51 @@ const tr =
 const predictions = document.getElementById("input-predictions");
 const popUp = document.getElementById("win-popup");
 const overlay = document.getElementById("overlay");
+const modeSection = document.getElementById("mode-section");
 
-if (!(button && input && tbody && tr && predictions && popUp && overlay)) {
+if (
+  !(button && input && tbody && tr) ||
+  !(predictions && popUp && overlay && modeSection)
+) {
   alert("broken js, ask geymat for repairs please");
   throw "";
 }
 
+function getTommorowMidnightUTC() {
+  const midnight = new Date();
+  midnight.setDate(day + 9);
+  midnight.setUTCHours(0);
+  midnight.setUTCMinutes(0);
+  midnight.setUTCSeconds(0);
+  midnight.setUTCMilliseconds(0);
+  return midnight;
+}
+setInterval(function () {
+  const now = new Date();
+  const midnight = getTommorowMidnightUTC();
+  const time = (midnight - now) / 1000;
+  if (time < 0) modeSection.nextElementSibling.innerText = "Next Daily out";
+  else
+    modeSection.nextElementSibling.innerText = `Next Daily in ${Math.floor(time / 3600)} hours ${Math.floor((time % 3600) / 60)} minutes`;
+}, 1000);
+
 let shows = shows_full.slice();
 let answer;
 let answerTrimmed;
-let day = new Date().getUTCDate() - 6; // works only for june, days since launch
+let day = getDaysSinceStart();
 let mode;
 let selectedPrediction = -1;
 let predictionsList = [];
-setUpNewGame(location.hash === "#/unlimited" ? "unlimited" : "daily");
+setUpNewGame(location.hash === "#/endless" ? "endless" : "daily");
 
 function getTodaysShow() {
   const candidates = [
-    216, 396, 55138, 555, 3134, 6489, 83, 672, 35073, 713, 37196, 184, 45148,
+    55138, 555, 3134, 6489, 83, 672, 35073, 713, 37196, 184, 3134, 45148, 951,
+    1551, 4296, 41933, 47182, 72999, 84, 1744, 22438, 69327, 178, 43094,
   ];
-  return shows.find((show) => show.id === candidates[day]);
+  if (day < candidates.length)
+    return shows.find((show) => show.id === candidates[day]);
+  return shows[((day + 1) * 12678168) % shows.length];
 }
 
 function isEqual(elem1, elem2, category) {
@@ -81,6 +106,14 @@ function generateTdPicture(src, style = null) {
   return elem;
 }
 
+function isSimilarNetwork(network1, network2) {
+  if (network1 === "Disney XD" && ["Disney Channel"].includes(network2))
+    return true;
+  if (network1 === "Disney Channel" && ["Disney XD"].includes(network2))
+    return true;
+  return false;
+}
+
 function generateTr(_guess, _answer) {
   function upDownNone(a, b) {
     if (a > b) return " ↑";
@@ -102,7 +135,7 @@ function generateTr(_guess, _answer) {
       _guess.year + upDownNone(_answer.year, _guess.year),
       _guess.year === _answer.year
         ? "correct"
-        : Math.abs(_guess.year - _answer.year) < 3
+        : Math.abs(_guess.year - _answer.year) <= 3
           ? "close"
           : "wrong",
     ),
@@ -116,7 +149,11 @@ function generateTr(_guess, _answer) {
   elem.appendChild(
     generateTd(
       _guess.network,
-      _guess.network === _answer.network ? "correct" : "wrong",
+      _guess.network === _answer.network
+        ? "correct"
+        : isSimilarNetwork(_guess.network, _answer.network)
+          ? "close"
+          : "wrong",
     ),
   );
   elem.appendChild(
@@ -134,7 +171,7 @@ function generateTr(_guess, _answer) {
       _guess.rating + upDownNone(_answer.rating, _guess.rating),
       _guess.rating === _answer.rating
         ? "correct"
-        : Math.abs(_guess.rating - _answer.rating) < 0.5
+        : Math.abs(_guess.rating - _answer.rating) <= 0.5
           ? "close"
           : "wrong",
     ),
@@ -179,10 +216,76 @@ function updateInfos(_guess) {
   }
 }
 
+function goToEndless() {
+  location.hash = "#/endless";
+  setUpNewGame("endless");
+}
+function goToDaily() {
+  location.hash = "#/daily";
+  setUpNewGame("daily");
+}
+function giveUp() {
+  generateGuess(answer);
+}
+function retry() {
+  setUpNewGame("endless");
+}
+function makeWinModeSection(which) {
+  function clearEvent() {
+    modeSection.firstElementChild.removeEventListener("click", goToEndless);
+    modeSection.firstElementChild.removeEventListener("click", giveUp);
+    modeSection.firstElementChild.removeEventListener("click", retry);
+    modeSection.nextElementSibling.removeEventListener("click", goToDaily);
+  }
+  if (!["hidden", "endless", "give up", "retry"].includes(which)) {
+    alert(
+      "makeWinModeSection function received wrong argument, contact geymat if happened",
+    );
+    throw 0;
+  }
+  if (which === "hidden") {
+    modeSection.classList.add("hidden");
+    modeSection.nextElementSibling.style.cursor = "default";
+    return;
+  }
+  if (which === "endless") {
+    modeSection.classList.remove("hidden");
+    modeSection.firstElementChild.innerText = "endless mode";
+    modeSection.lastElementChild.innerText =
+      "The endless mode is harder due to the answer being random (unlike the daily that has famous answer until july 3rd), but you still have as many guess as you want";
+    clearEvent();
+    modeSection.firstElementChild.addEventListener("click", goToEndless);
+    modeSection.nextElementSibling.style.cursor = "default";
+    return;
+  }
+  if (which === "give up") {
+    modeSection.classList.remove("hidden");
+    modeSection.firstElementChild.innerText = "give up";
+    modeSection.lastElementChild.innerText =
+      "Want the answer ? For free ? In this economy ?";
+    clearEvent();
+    modeSection.firstElementChild.addEventListener("click", giveUp);
+    modeSection.nextElementSibling.style.removeProperty("cursor");
+    modeSection.nextElementSibling.addEventListener("click", goToDaily);
+    return;
+  }
+  if (which === "retry") {
+    modeSection.classList.remove("hidden");
+    modeSection.firstElementChild.innerText = "new game";
+    modeSection.lastElementChild.innerText = "Not called endless for no reason";
+    clearEvent();
+    modeSection.firstElementChild.addEventListener("click", retry);
+    modeSection.nextElementSibling.style.removeProperty("cursor");
+    modeSection.nextElementSibling.addEventListener("click", goToDaily);
+    return;
+  }
+}
+
 function makeWinPopUp() {
   popUp.classList.remove("hidden");
   overlay.classList.remove("hidden");
   let elem = popUp.firstElementChild.nextElementSibling;
+  elem.firstElementChild.firstElementChild.removeAttribute("href");
   if (answer.officialSite)
     elem.firstElementChild.firstElementChild.href = answer.officialSite;
   elem.firstElementChild.firstElementChild.innerText = answer.name;
@@ -196,17 +299,15 @@ function generateGuess(guess) {
   if (mode === "daily") {
     const value = JSON.parse(getGuessesCookie());
     value.push(guess.id);
-    document.cookie =
-      "guesses=" +
-      JSON.stringify(value) +
-      "; expires=" +
-      new Date(Date.UTC(2026, 5, day + 6, 23, 59, 59)).toString() +
-      "; path=/";
+    document.cookie = `guesses=${JSON.stringify(value)}; expires=${getTommorowMidnightUTC().toString()}; path=${location.path}`;
   }
   resetPrediction();
   shows.splice(shows.indexOf(guess), 1);
   input.value = "";
   if (answer === guess) {
+    makeWinModeSection(
+      ["refreshing", "daily"].includes(mode) ? "endless" : "retry",
+    );
     makeWinPopUp();
   }
   const show_trimmed = trimShow(guess);
@@ -310,14 +411,17 @@ function resetOldGame() {
 
 function setUpNewGame(gamemode) {
   resetOldGame();
-  day = new Date().getUTCDate() - 6;
-  if (gamemode === "unlimited") {
-    location.hash = "#/unlimited";
+  shows = shows_full.slice();
+  day = getDaysSinceStart();
+  if (gamemode === "endless") {
+    location.hash = "#/endless";
+    makeWinModeSection("give up");
     answer = shows[Math.floor(Math.random() * shows.length)];
     answerTrimmed = trimShow(answer);
     mode = "unlimited";
     return;
   }
+  makeWinModeSection("hidden");
   location.hash = "#/daily";
   answer = getTodaysShow();
   answerTrimmed = trimShow(answer);
@@ -326,4 +430,12 @@ function setUpNewGame(gamemode) {
     generateGuess(shows.find((show) => show.id == guess)),
   );
   mode = "daily";
+}
+
+function getDaysSinceStart() {
+  const today = new Date();
+  const start = new Date("2026-06-08");
+  const timeDiff = today - start;
+  const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  return dayDiff;
 }
