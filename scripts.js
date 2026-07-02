@@ -20,7 +20,7 @@ if (
 
 function getTommorowMidnightUTC() {
   const midnight = new Date();
-  midnight.setDate((new Date()).getDate() + 1);
+  midnight.setDate(today.getDate() + 1);
   midnight.setUTCHours(0);
   midnight.setUTCMinutes(0);
   midnight.setUTCSeconds(0);
@@ -39,6 +39,7 @@ setInterval(function () {
 let shows = shows_full.slice();
 let answer;
 let answerTrimmed;
+let today = new Date();
 let day = getDaysSinceStart();
 let mode;
 let selectedPrediction = -1;
@@ -407,6 +408,7 @@ function setUpNewGame(gamemode) {
   resetOldGame();
   shows = shows_full.slice();
   day = getDaysSinceStart();
+  today = new Date();
   if (gamemode === "endless") {
     location.hash = "#/endless";
     makeWinModeSection("give up");
@@ -427,7 +429,6 @@ function setUpNewGame(gamemode) {
 }
 
 function getDaysSinceStart() {
-  const today = new Date();
   const start = new Date("2026-06-08");
   const timeDiff = today - start;
   const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
