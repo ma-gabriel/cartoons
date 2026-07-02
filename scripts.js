@@ -20,7 +20,7 @@ if (
 
 function getTommorowMidnightUTC() {
   const midnight = new Date();
-  midnight.setDate(day + 9);
+  midnight.setDate((new Date()).getDate() + 1);
   midnight.setUTCHours(0);
   midnight.setUTCMinutes(0);
   midnight.setUTCSeconds(0);
@@ -46,13 +46,7 @@ let predictionsList = [];
 setUpNewGame(location.hash === "#/endless" ? "endless" : "daily");
 
 function getTodaysShow() {
-  const candidates = [
-    55138, 555, 3134, 6489, 83, 672, 35073, 713, 37196, 184, 3134, 45148, 951,
-    1551, 4296, 41933, 47182, 72999, 84, 1744, 22438, 69327, 178, 43094,
-  ];
-  if (day < candidates.length)
-    return shows.find((show) => show.id === candidates[day]);
-  return shows[((day + 1) * 12678168) % shows.length];
+  return shows[((day + 1) * 2147483647) % shows.length];
 }
 
 function isEqual(elem1, elem2, category) {
